@@ -1,14 +1,25 @@
-# Download and invoke cyclonedx-gomod in a single step
-- name: Generate SBOM
-  uses: CycloneDX/gh-gomod-generate-sbom@v2
-  with:
-    version: v1
-    args: mod -licenses -json -output bom.json
+name: SBOM Generator
 
-# Just download cyclonedx-gomod and call it in a later step
-- name: Download cyclonedx-gomod
-  uses: CycloneDX/gh-gomod-generate-sbom@v2
-  with:
-    version: v1
-- name: Generate SBOM
-  run: cyclonedx-gomod app -licenses -output bom.xml -main cmd/acme-app
+on:
+  push:
+    branches: [ "main" ]
+
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: advanced-security/sbom-generator-action@v0.0.1
+        id: sbom
+        env: 
+          GITHUB_TOKEN: ${{ github.token }}
+      - uses: actions/upload-artifact@v3.1.0
+        with: 
+          path: ${{steps.sbom.outputs.fileName }}
+          name: "SBOM"
